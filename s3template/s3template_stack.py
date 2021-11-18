@@ -1,15 +1,24 @@
-from aws_cdk import core as cdk
+import aws_cdk as cdk
+from aws_cdk import aws_s3 as s3, aws_iam as iam, core
 
-# For consistency with other languages, `cdk` is the preferred import name for
-# the CDK's core module.  The following line also imports it as `core` for use
-# with examples from the CDK Developer's Guide, which are in the process of
-# being updated to use `cdk`.  You may delete this import if you don't need it.
-from aws_cdk import core
-
-
-class S3TemplateStack(cdk.Stack):
-
-    def __init__(self, scope: cdk.Construct, construct_id: str, **kwargs) -> None:
-        super().__init__(scope, construct_id, **kwargs)
-
-        # The code that defines your stack goes here
+class S3Template(core.Stack):
+    def __init__(self, app: core.App, id: str, props, **kwargs) -> None:
+        super().__init__(app, id)
+        print(props['bucket_name'])
+        #create an S3 bucket
+        myBucket = s3.Bucket(self, 'MyFirstBucket', bucket_name= props['bucket_name'],removal_policy=cdk.core.RemovalPolicy.DESTROY,versioned= props['bucket_versioning'], encryption=s3.BucketEncryption.S3_MANAGED,public_read_access=False, block_public_access=s3.BlockPublicAccess.BLOCK_ALL,enforce_ssl=True)
+#        myBucket = s3.BlockPublicAccess                
+        myBucket.add_to_resource_policy (    #Grant read access to everyone in your account
+            iam.PolicyStatement(
+                    actions=['s3:GetObject'],
+                    resources=[myBucket.arn_for_objects('*')],
+                    principals=[iam.AccountPrincipal(account_id=core.Aws.ACCOUNT_ID)],
+            )
+        )
+        myBucket.apply_removal_policy(cdk.core.RemovalPolicy.DESTROY)
+        
+#        myUser = iam.User(self,'cdk-user')    #Grant write access to a specific user
+#        myBucket.grant_write(myUser)
+        core.Tag.add(myBucket,key="Name",value=str(props['s3_tag1']),include_resource_types=[])
+        core.Tag.add(myBucket,key="Project",value=str(props['s3_tag2']),include_resource_types=[])
+        

@@ -9,11 +9,19 @@ from aws_cdk import core as cdk
 # being updated to use `cdk`.  You may delete this import if you don't need it.
 from aws_cdk import core
 
-from s3template.s3template_stack import S3TemplateStack
-
-
+from s3template.s3template_stack import S3Template
 app = core.App()
-S3TemplateStack(app, "S3TemplateStack",
+#print(type(app.node.try_get_context("Bucket_Versioning")))
+props = {
+            'bucket_name':app.node.try_get_context("bucket_name"),
+            'bucket_versioning':eval(str(app.node.try_get_context("versioning"))),
+            's3_tag1' : app.node.try_get_context("tag_owner"),
+            's3_tag2' : app.node.try_get_context("tag_project"),
+            'account_number' : app.node.try_get_context("account_number")
+            
+        }
+print(props['bucket_name'])
+S3Template(app, "S3TemplateStack", props, env={'account': props['account_number'],'region': 'eu-west-1'})
     # If you don't specify 'env', this stack will be environment-agnostic.
     # Account/Region-dependent features and context lookups will not work,
     # but a single synthesized template can be deployed anywhere.
@@ -27,8 +35,6 @@ S3TemplateStack(app, "S3TemplateStack",
     # want to deploy the stack to. */
 
     #env=core.Environment(account='123456789012', region='us-east-1'),
-
     # For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
-    )
 
 app.synth()
